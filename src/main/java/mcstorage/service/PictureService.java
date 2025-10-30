@@ -23,15 +23,15 @@ public class PictureService {
 	public PictureService(StorageRepository storageRepository) {
 		this.storageRepository = storageRepository;
 		if(System.getProperty("os.name") == "Linux") {
-			rootDir = "/var/lib/MarchCat/Storage/";
+			rootDir = "/var/lib/MarchCat_Storage/Storage/";
 		} else {
-			rootDir = "C:\\MarchCat Storage\\";
+			rootDir = "C:\\MarchCat_Storage\\";
 		}
 	}
 
 	@Transactional
 	public boolean store(MultipartFile file, Picture picture) throws ServiceException {
-		InputStream is = null;;
+		InputStream is = null;
 		try {
 			file.getInputStream();
 		} catch (IOException e) {
