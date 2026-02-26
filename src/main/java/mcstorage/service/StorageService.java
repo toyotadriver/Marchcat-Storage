@@ -22,12 +22,10 @@ public class StorageService {
 
 	private String rootDir;
 	private String sep = File.separator;
-	private final RedisTemplate<String, String> redisTemplate;
 
 	private final long MAXSIZE = 3000000L;
 
-	public StorageService(RedisTemplate<String, String> redisTemplate) {
-		this.redisTemplate = redisTemplate;
+	public StorageService() {
 
 		if (System.getProperty("os.name") == "Linux") {
 			rootDir = "/var/lib/MarchCat_Storage/Storage/";
@@ -53,24 +51,16 @@ public class StorageService {
 		if (size > MAXSIZE) {
 			throw new StorageException("Your file is too big for mee >.<!");
 		}
-
-		String hash;
+		
 		InputStream is;
-		// REDIS CHECK
-		String tokenHash = HashGen.generateStringHash(token);
-		if ((String) redisTemplate.opsForHash().get(uploadId, "hash") == tokenHash) {
 
 			try {
 				is = file.getInputStream();
-				hash = HashGen.generateISHash(is);
 			} catch (IOException e) {
 				throw new StorageException("Failed to get the inputStream: ", e);
 			}
-
-		} else {
-			throw new StorageException("Token not found in Redis");
-		}
-
+			
+		String hash = HashGen.generateISHash(is);
 		String origName = file.getOriginalFilename();
 		String[] splitName = origName.split("."); // Because name can have dots
 		String ext = splitName[splitName.length - 1];
@@ -82,7 +72,7 @@ public class StorageService {
 
 		StoredFileRecord storedFileRecord = new StoredFileRecord(origName, hash, ext, size, Timestamp.from(Instant.now()));
 
-		// Check if the file already exists
+		// Check if the file already exists and return as if it was stored
 		if (Files.exists(copyPath)) {
 			return storedFileRecord;
 		}
@@ -96,6 +86,12 @@ public class StorageService {
 		return storedFileRecord;
 	}
 
+	/**
+	 * Return the byte array of the file
+	 * @param hashNameWithExt - hashed name with extension
+	 * @return byte[]
+	 * @throws StorageException
+	 */
 	public byte[] getBytesOfPicture(String hashNameWithExt) throws StorageException {
 		String[] subDirs = getSubDirs(hashNameWithExt);
 		String[] splitName = splitHashNameAndExt(hashNameWithExt);
@@ -113,6 +109,11 @@ public class StorageService {
 		return bytes;
 	}
 
+	/**
+	 * Delete the file 
+	 * @param hashNameWithExt - hash name with extension.
+	 * @throws StorageException
+	 */
 	public void delete(String hashNameWithExt) throws StorageException {
 		String[] splitName = splitHashNameAndExt(hashNameWithExt);
 

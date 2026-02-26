@@ -3,6 +3,8 @@ package mcstorage.security;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import mcstorage.util.HashGen;
+
 @Component
 public class StorageTempTokenManager {
 	
@@ -14,7 +16,11 @@ public class StorageTempTokenManager {
 		
 	}
 	
-	public void verifyToken(String token) {
-			//TODO
+	public boolean verifyRequest(String uploadId, String token){
+			if(redisTemplate.opsForHash().get(uploadId, "hash") == HashGen.generateStringHash(token)) {
+				return true;
+			} else {
+				return false;
+			}
 	}
 }
