@@ -2,13 +2,14 @@ package mcstorage.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class HashGen {
 	public static String generateStringHash(String string) {
 		
-		return digestIt(string.getBytes());		
+		return digestIt(string.getBytes(StandardCharsets.UTF_8));		
 		
 	}
 	

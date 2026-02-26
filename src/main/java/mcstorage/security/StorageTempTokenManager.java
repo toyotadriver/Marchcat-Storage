@@ -4,6 +4,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import mcstorage.util.HashGen;
+import mcstorage.util.Logging;
 
 @Component
 public class StorageTempTokenManager {
@@ -17,9 +18,13 @@ public class StorageTempTokenManager {
 	}
 	
 	public boolean verifyRequest(String uploadId, String token){
-			if(redisTemplate.opsForHash().get(uploadId, "hash") == HashGen.generateStringHash(token)) {
+		String tokenHash = HashGen.generateStringHash(token);
+		Logging.log("GENERATED HASH TOKEN: " + tokenHash);
+			if(redisTemplate.opsForHash().get(uploadId, "hash").equals(tokenHash)) {
+				
 				return true;
 			} else {
+				Logging.log("TOKEN IS INVALID");
 				return false;
 			}
 	}

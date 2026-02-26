@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import mcstorage.util.HashGen;
+import mcstorage.util.Logging;
 
 @Service
 public class StorageService {
@@ -28,9 +29,9 @@ public class StorageService {
 	public StorageService() {
 
 		if (System.getProperty("os.name") == "Linux") {
-			rootDir = "/var/lib/MarchCat_Storage/Storage/";
+			rootDir = "/var/lib/MarchCat_Storage";
 		} else {
-			rootDir = "C:\\MarchCat_Storage\\";
+			rootDir = "C:\\MarchCat_Storage";
 		}
 	}
 
@@ -62,13 +63,15 @@ public class StorageService {
 			
 		String hash = HashGen.generateISHash(is);
 		String origName = file.getOriginalFilename();
-		String[] splitName = origName.split("."); // Because name can have dots
+		Logging.log(origName);
+		String[] splitName = origName.split("\\."); // Because name can have dots
 		String ext = splitName[splitName.length - 1];
 
 		String[] subDirs = getSubDirs(hash);
 
-		String dir = rootDir + sep + subDirs[0] + sep + subDirs[1];
-		Path copyPath = Paths.get(dir + sep + hash + "." + ext);
+		String dirs = rootDir + sep + subDirs[0] + sep + subDirs[1];
+		Path dirsPath = Paths.get(dirs);
+		Path copyPath = Paths.get(dirs + sep + hash + "." + ext);
 
 		StoredFileRecord storedFileRecord = new StoredFileRecord(origName, hash, ext, size, Timestamp.from(Instant.now()));
 
@@ -78,6 +81,7 @@ public class StorageService {
 		}
 
 		try {
+			Files.createDirectories(dirsPath);
 			Files.copy(is, copyPath);
 		} catch (IOException e) {
 			throw new StorageException("Failed to copy the file: " + origName, e);
