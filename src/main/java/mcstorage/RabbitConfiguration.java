@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfiguration {
 	
-	public static final String EXCHANGE = "file.exchange";
-  public static final String ROUTING_KEY_UPLOADED = "file.uploaded";
-  public static final String ROUTING_KEY_DELETED = "file.deleted";
+	public static final String EVENT_EXCHANGE = "file.event.exchange";
+	public static final String UPLOADED_EVENT_KEY = "file.uploaded";
+  public static final String DELETED_EVENT_KEY = "file.deleted";
 
   @Bean
   public TopicExchange exchange() {
-      return new TopicExchange(EXCHANGE);
+      return new TopicExchange(EVENT_EXCHANGE);
   }
   
   @Bean

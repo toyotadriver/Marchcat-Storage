@@ -46,8 +46,8 @@ public class StorageController {
 		try {
 			Logging.log("Hello from MarchCat Storage!");
 			if(storageTempTokenManager.verifyRequest(uploadId, uploadToken)) {
-				StoredFileRecord storedFileRecord = pictureService.store(file, uploadId, uploadToken);
-			
+				StoredFileRecord storedFileRecord = pictureService.store(file, uploadId);
+
 				//SEND RABBITMQ MESSAGE:
 				eventPublisher.publishFileUploaded(storedFileRecord);
 				return ResponseEntity.ok().build();
@@ -73,9 +73,10 @@ public class StorageController {
       return "pong";
   }
 	
-	public ResponseEntity<Void> getFile(){
+	@GetMapping("/link/{picLink}")
+	public byte[] getFile(@PathVariable("picLink") String picLink){
 		
 		//TODO
-		return new ResponseEntity<Void>(HttpStatus.ACCEPTED);
+		return new byte[] {};
 	}
 }

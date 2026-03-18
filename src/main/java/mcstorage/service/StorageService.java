@@ -9,7 +9,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +29,12 @@ public class StorageService {
 
 	private String rootDir;
 	private String sep = File.separator;
+	private final RedisTemplate<String, String> redisTemplate;
 
 	private final long MAXSIZE = 3000000L;
 
-	public StorageService() {
+	public StorageService(RedisTemplate redisTemplate) {
+		this.redisTemplate = redisTemplate;
 
 		if (System.getProperty("os.name") == "Linux") {
 			rootDir = "/var/lib/MarchCat_Storage";
@@ -46,7 +54,7 @@ public class StorageService {
 	 * @throws StorageException
 	 */
 	@Transactional
-	public StoredFileRecord store(MultipartFile file, String uploadId, String token) throws StorageException {
+	public StoredFileRecord store(MultipartFile file, String uploadId) throws StorageException {
 
 		long size = file.getSize();
 		if (size > MAXSIZE) {
@@ -73,16 +81,27 @@ public class StorageService {
 		Path dirsPath = Paths.get(dirs);
 		Path copyPath = Paths.get(dirs + sep + hash + "." + ext);
 
-		StoredFileRecord storedFileRecord = new StoredFileRecord(origName, hash, ext, size, Timestamp.from(Instant.now()));
+		StoredFileRecord storedFileRecord = new StoredFileRecord(uploadId, origName, hash, ext, size, Timestamp.from(Instant.now()));
 
 		// Check if the file already exists and return as if it was stored
-		if (Files.exists(copyPath)) {
-			return storedFileRecord;
-		}
+		
 
 		try {
 			Files.createDirectories(dirsPath);
-			Files.copy(is, copyPath);
+			
+			if (!Files.exists(copyPath)) {
+				Files.copy(is, copyPath);
+			}
+			Collection<Object> hashKeysColl = redisTemplate.opsForHash().keys(uploadId)
+					.stream()
+					.filter(t -> t instanceof String)
+					.collect(Collectors.toList());
+			hashKeysColl.forEach(t -> {
+				t = (String) t; //Well, I filtered it
+			}); 
+			
+			redisTemplate.opsForHash().persist(uploadId, hashKeysColl);
+			
 		} catch (IOException e) {
 			throw new StorageException("Failed to copy the file: " + origName, e);
 		}
